@@ -22,6 +22,15 @@ const routes: RouteRecordRaw[] = [
                 component: () => import(/* webpackChunkName: "dashboard" */ '../views/dashboard.vue'),
             },
             {
+              path: '/userTable',
+              name: 'usertable',
+              meta: {
+                  title: '用户表',
+                  permiss: '2',
+              },
+              component: () => import(/* webpackChunkName: "table" */ '../views/userTable.vue'),
+          },
+            {
                 path: '/table',
                 name: 'basetable',
                 meta: {

@@ -3,8 +3,8 @@
 		<div class="ms-login">
 			<div class="ms-title">后台管理系统</div>
 			<el-form :model="param" :rules="rules" ref="login" label-width="0px" class="ms-content">
-				<el-form-item prop="username">
-					<el-input v-model="param.username" placeholder="username">
+				<el-form-item prop="userName">
+					<el-input v-model="param.userName" placeholder="用户名">
 						<template #prepend>
 							<el-button :icon="User"></el-button>
 						</template>
@@ -13,7 +13,7 @@
 				<el-form-item prop="password">
 					<el-input
 						type="password"
-						placeholder="password"
+						placeholder="密码"
 						v-model="param.password"
 						@keyup.enter="submitForm(login)"
 					>
@@ -39,20 +39,20 @@ import { useRouter } from 'vue-router';
 import { ElMessage } from 'element-plus';
 import type { FormInstance, FormRules } from 'element-plus';
 import { Lock, User } from '@element-plus/icons-vue';
-
+import service from '../utils/request';
 interface LoginInfo {
-	username: string;
+	userName: string;
 	password: string;
 }
 
 const router = useRouter();
 const param = reactive<LoginInfo>({
-	username: 'admin',
-	password: '123123'
+	userName: '',
+	password: ''
 });
-
+let result = "";
 const rules: FormRules = {
-	username: [
+	userName: [
 		{
 			required: true,
 			message: '请输入用户名',
@@ -61,23 +61,23 @@ const rules: FormRules = {
 	],
 	password: [{ required: true, message: '请输入密码', trigger: 'blur' }]
 };
-const permiss = usePermissStore();
 const login = ref<FormInstance>();
-const submitForm = (formEl: FormInstance | undefined) => {
+const submitForm = async (formEl: FormInstance | undefined) => {
 	if (!formEl) return;
-	formEl.validate((valid: boolean) => {
-		if (valid) {
-			ElMessage.success('登录成功');
-			localStorage.setItem('ms_username', param.username);
-			const keys = permiss.defaultList[param.username == 'admin' ? 'admin' : 'user'];
-			permiss.handleSet(keys);
-			localStorage.setItem('ms_keys', JSON.stringify(keys));
-			router.push('/');
-		} else {
-			ElMessage.error('登录成功');
-			return false;
-		}
-	});
+  try {
+    let result = await service.post('User/Login',param);
+    console.log(result)
+    ElMessage.success('登录成功');
+    console.log(result.data);
+		localStorage.setItem('ms_userToken', result.data.message);
+    localStorage.setItem('ms_username', param.userName);
+		router.push('/');
+    return true;
+  } catch (error) {
+    console.log(error)
+    ElMessage.error(error.data.message);
+		return false;
+  }
 };
 
 const tags = useTagsStore();

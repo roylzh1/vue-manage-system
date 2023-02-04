@@ -7,17 +7,9 @@
 						<el-avatar :size="120" :src="imgurl" />
 						<div class="user-info-cont">
 							<div class="user-info-name">{{ name }}</div>
-							<div>{{ role }}</div>
 						</div>
 					</div>
-					<div class="user-info-list">
-						上次登录时间：
-						<span>2022-10-01</span>
-					</div>
-					<div class="user-info-list">
-						上次登录地点：
-						<span>东莞</span>
-					</div>
+          <div>{{ role }}</div>
 				</el-card>
 				<el-card shadow="hover" style="height: 252px">
 					<template #header>
@@ -118,11 +110,14 @@
 
 <script setup lang="ts" name="dashboard">
 import Schart from 'vue-schart';
-import { reactive } from 'vue';
+import { onMounted, reactive } from 'vue';
 import imgurl from '../assets/img/img.jpg';
 
 const name = localStorage.getItem('ms_username');
-const role: string = name === 'admin' ? '超级管理员' : '普通用户';
+let role: string = "管理员";
+onMounted(()=>{
+
+})
 
 const options = {
 	type: 'bar',
