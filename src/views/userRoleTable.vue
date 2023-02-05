@@ -14,33 +14,7 @@
 			<el-table :data="tableData" border class="table" ref="multipleTable" header-cell-class-name="table-header">
 				<el-table-column prop="id" label="ID" width="55" align="center"></el-table-column>
 				<el-table-column prop="name" label="用户名"></el-table-column>
-				<el-table-column prop="email" label="邮箱"></el-table-column>
-        <!--
-				<el-table-column label="头像(查看大图)" align="center">
-					<template #default="scope">
-						<el-image
-							class="table-td-thumb"
-							:src="scope.row.thumb"
-							:z-index="10"
-							:preview-src-list="[scope.row.thumb]"
-							preview-teleported
-						>
-						</el-image>
-					</template>
-				</el-table-column>
-        -->
-				<el-table-column prop="phone" label="手机号"></el-table-column>
-        <!--
-				<el-table-column label="状态" align="center">
-					<template #default="scope">
-						<el-tag
-							:type="scope.row.state === '成功' ? 'success' : scope.row.state === '失败' ? 'danger' : ''"
-						>
-							{{ scope.row.state }}
-						</el-tag>
-					</template>
-				</el-table-column>
-        -->
+				<el-table-column prop="role" label="角色"></el-table-column>
 				<el-table-column label="操作" width="220" align="center">
 					<template #default="scope">
 						<el-button text :icon="Edit" @click="handleEdit(scope.$index, scope.row)" v-permiss="15">
@@ -70,11 +44,8 @@
 				<el-form-item label="用户名">
 					<el-input v-model="form.name"></el-input>
 				</el-form-item>
-				<el-form-item label="邮箱">
-					<el-input v-model="form.email"></el-input>
-				</el-form-item>
-        <el-form-item label="手机号">
-					<el-input v-model="form.phone"></el-input>
+				<el-form-item label="角色">
+					<el-input v-model="form.role"></el-input>
 				</el-form-item>
 			</el-form>
 			<template #footer>
@@ -97,8 +68,7 @@ import service from '../utils/request';
 interface TableItem {
 	id: number;
 	name: string;
-	email: string;
-	phone: string;
+	role: string[];
 }
 
 const query = reactive({
@@ -112,16 +82,15 @@ let tableData = reactive<TableItem[]>([]);
 let pageTotal = ref(4);
 // 获取表格数据
 onMounted(async()=>{
-   let res = await service.get(`Admin/GetUser?pageIndex=${query.pageIndex}&pageSize=${query.pageSize}`);
+   let res = await service.get(`Admin/GetUserRole?pageIndex=${query.pageIndex}&pageSize=${query.pageSize}`);
   console.log(res.data.value)
   pageTotal.value = res.data.message * 1;//更新总页数
   const array = res.data.value
   array.forEach(user => {
     tableData.push({
-      "id": user.id,
+      "id": user.userId,
      "name": user.userName,
-     "email": user.email ?? '未填写',
-     "phone": user.phoneNumber ?? '未填写',
+      "role": user.role
     })
   });
 })
@@ -152,19 +121,13 @@ const handleDelete = (index: number) => {
 // 表格编辑时弹窗和保存
 const editVisible = ref(false);
 //编辑表单
-let form = reactive({
-  id: '',
-	name: '',
-	email: '',
-  phone: '',
-});
+let form = reactive<TableItem>({});
 let idx: number = -1;
 const handleEdit = (index: number, row: any) => {
 	idx = index;
-  form.id = row.id,
 	form.name = row.name;
-	form.email = row.email;
-  form.phone = row.phone;
+	form.role = row.role;
+  form.id = 0;
 	editVisible.value = true;
 };
 const saveEdit = async() => {
