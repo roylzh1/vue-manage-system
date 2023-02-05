@@ -1,5 +1,6 @@
 import axios, {AxiosInstance, AxiosError, AxiosResponse, AxiosRequestConfig} from 'axios';
-
+import { ElMessage } from 'element-plus';
+import router from '../router/index';
 const service:AxiosInstance = axios.create({
     timeout: 5000
 });
@@ -33,8 +34,11 @@ service.interceptors.response.use(
             Promise.reject();
         }
     },
-    (error: AxiosError) => {
-        console.log(error);
+    async(error: AxiosError) => {
+      if(error.response?.status === 401){
+        ElMessage.error("令牌过期,请重新登录");
+        router.push('/login');
+      }
         return Promise.reject(error.response);
     }
 );
