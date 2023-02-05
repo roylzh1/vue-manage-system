@@ -68,9 +68,19 @@ const items = [
         title: '表格相关',
         permiss: '2',
         subs: [
-          {
+            {
                 index: '/userTable',
                 title: '用户表',
+                permiss: '2',
+            },
+            {
+                index: '/roleTable',
+                title: '角色表',
+                permiss: '2',
+            },
+            {
+                index: '/userRoleTable',
+                title: '用户角色表',
                 permiss: '2',
             },
             {

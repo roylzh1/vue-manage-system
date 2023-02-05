@@ -2,51 +2,15 @@
 	<div>
 		<div class="container">
 			<div class="handle-box">
-				<el-select v-model="query.address" placeholder="地址" class="handle-select mr10">
-					<el-option key="1" label="广东" value="广东省"></el-option>
-					<el-option key="2" label="湖南" value="湖南省"></el-option>
-				</el-select>
-				<el-input v-model="query.name" placeholder="用户名" class="handle-input mr10"></el-input>
-				<el-button type="primary" :icon="Search" @click="handleSearch">搜索</el-button>
-				<el-button type="primary" :icon="Plus">新增</el-button>
+				<el-button type="primary" :icon="Plus" @click="handleAddRole">新增</el-button>
 			</div>
       <!--表头-->
 			<el-table :data="tableData" border class="table" ref="multipleTable" header-cell-class-name="table-header">
 				<el-table-column prop="id" label="ID" width="55" align="center"></el-table-column>
-				<el-table-column prop="name" label="用户名"></el-table-column>
-				<el-table-column prop="email" label="邮箱"></el-table-column>
-        <!--
-				<el-table-column label="头像(查看大图)" align="center">
-					<template #default="scope">
-						<el-image
-							class="table-td-thumb"
-							:src="scope.row.thumb"
-							:z-index="10"
-							:preview-src-list="[scope.row.thumb]"
-							preview-teleported
-						>
-						</el-image>
-					</template>
-				</el-table-column>
-        -->
-				<el-table-column prop="phone" label="手机号"></el-table-column>
-        <!--
-				<el-table-column label="状态" align="center">
-					<template #default="scope">
-						<el-tag
-							:type="scope.row.state === '成功' ? 'success' : scope.row.state === '失败' ? 'danger' : ''"
-						>
-							{{ scope.row.state }}
-						</el-tag>
-					</template>
-				</el-table-column>
-        -->
+				<el-table-column prop="name" label="角色名"></el-table-column>
 				<el-table-column label="操作" width="220" align="center">
 					<template #default="scope">
-						<el-button text :icon="Edit" @click="handleEdit(scope.$index, scope.row)" v-permiss="15">
-							编辑
-						</el-button>
-						<el-button text :icon="Delete" class="red" @click="handleDelete(scope.$index)" v-permiss="16">
+						<el-button text :icon="Delete" class="red" @click="handleDelete(scope.$index, scope.row)" v-permiss="16" v-if="scope.row.id !=1 ">
 							删除
 						</el-button>
 					</template>
@@ -67,14 +31,8 @@
 		<!-- 编辑弹出框 -->
 		<el-dialog title="编辑" v-model="editVisible" width="30%">
 			<el-form label-width="70px">
-				<el-form-item label="用户名">
+				<el-form-item label="角色名">
 					<el-input v-model="form.name"></el-input>
-				</el-form-item>
-				<el-form-item label="邮箱">
-					<el-input v-model="form.email"></el-input>
-				</el-form-item>
-        <el-form-item label="手机号">
-					<el-input v-model="form.phone"></el-input>
 				</el-form-item>
 			</el-form>
 			<template #footer>
@@ -93,6 +51,7 @@ import { ElMessage, ElMessageBox } from 'element-plus';
 import { Delete, Edit, Search, Plus } from '@element-plus/icons-vue';
 import { fetchData } from '../api/index';
 import service from '../utils/request';
+import { useRouter } from 'vue-router';
 
 interface TableItem {
 	id: number;
@@ -100,7 +59,8 @@ interface TableItem {
 	email: string;
 	phone: string;
 }
-
+const router = useRouter();
+let roleList : Array<string>= [];
 const query = reactive({
 	address: '',
 	name: '',
@@ -112,41 +72,46 @@ let tableData = reactive<TableItem[]>([]);
 let pageTotal = ref(4);
 // 获取表格数据
 onMounted(async()=>{
-   let res = await service.get(`Admin/GetUser?pageIndex=${query.pageIndex}&pageSize=${query.pageSize}`);
+   let res = await service.get(`Admin/GetRole?pageIndex=${query.pageIndex}&pageSize=${query.pageSize}`);
   console.log(res.data.value)
+  res.data.value.forEach(role => {
+    roleList.push(role.name);
+  });
   pageTotal.value = res.data.message * 1;//更新总页数
   const array = res.data.value
-  array.forEach(user => {
+  array.forEach(role => {
     tableData.push({
-      "id": user.id,
-     "name": user.userName,
-     "email": user.email ?? '未填写',
-     "phone": user.phoneNumber ?? '未填写',
+      "id": role.id,
+     "name": role.name,
     })
   });
 })
 // 查询操作
 const handleSearch = () => {
 	query.pageIndex = 1;
-	getData();
 };
 // 分页导航
 const handlePageChange = (val: number) => {
 	query.pageIndex = val;
-	getData();
 };
-
+const handleAddRole = () => {
+	editVisible.value = true;
+}
 // 删除操作
-const handleDelete = (index: number) => {
+const handleDelete = (index: number,row: any) => {
 	// 二次确认删除
 	ElMessageBox.confirm('确定要删除吗？', '提示', {
 		type: 'warning'
 	})
-		.then(() => {
-			ElMessage.success('删除成功');
+		.then( async () => {
+      let result = await service.post(`/Admin/DeleteRole?roleName=${row.name}`);
+      router.go(0);
+      ElMessage.success('删除成功');
 			tableData.splice(index, 1);
 		})
-		.catch(() => {});
+		.catch((error) => {
+      ElMessage.error(error.data);
+    });
 };
 
 // 表格编辑时弹窗和保存
@@ -155,26 +120,14 @@ const editVisible = ref(false);
 let form = reactive({
   id: '',
 	name: '',
-	email: '',
-  phone: '',
 });
-let idx: number = -1;
-const handleEdit = (index: number, row: any) => {
-	idx = index;
-  form.id = row.id,
-	form.name = row.name;
-	form.email = row.email;
-  form.phone = row.phone;
-	editVisible.value = true;
-};
+
 const saveEdit = async() => {
   try {
-    let result = await service.post('/Admin/UpdateUser',form);
+    let result = await service.post(`/Admin/CreateRole?roleName=${form.name}`);
 	  editVisible.value = false;
-	  ElMessage.success(`修改第 ${idx + 1} 行成功`);
-	  tableData[idx].name = form.name;
-	  tableData[idx].email = form.email;
-    tableData[idx].phone = form.phone;
+    router.go(0);
+    ElMessage.success(`新增成功`);
   } catch (error) {
     console.log(error)
     ElMessage.error(error.data);

@@ -30,6 +30,24 @@ const routes: RouteRecordRaw[] = [
               },
               component: () => import(/* webpackChunkName: "table" */ '../views/userTable.vue'),
           },
+          {
+            path: '/roleTable',
+            name: 'roleTable',
+            meta: {
+                title: '角色表',
+                permiss: '2',
+            },
+            component: () => import(/* webpackChunkName: "table" */ '../views/roleTable.vue'),
+          },
+          {
+            path: '/userRoleTable',
+            name: 'userRoleTable',
+            meta: {
+                title: '用户角色表',
+                permiss: '2',
+            },
+            component: () => import(/* webpackChunkName: "table" */ '../views/userRoleTable.vue'),
+          },
             {
                 path: '/table',
                 name: 'basetable',
