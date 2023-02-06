@@ -19,10 +19,12 @@
 			<div class="pagination">
 				<el-pagination
 					background
-					layout="total, prev, pager, next"
+					layout="prev, pager, next"
 					:current-page="query.pageIndex"
 					:page-size="query.pageSize"
 					:total="pageTotal"
+          @prev-click="prevClick"
+          @next-click="nextClick"
 					@current-change="handlePageChange"
 				></el-pagination>
 			</div>
@@ -65,7 +67,7 @@ const query = reactive({
 	address: '',
 	name: '',
 	pageIndex: 1,
-	pageSize: 10
+	pageSize: 5
 });
 let totalPage = 1;
 let tableData = reactive<TableItem[]>([]);
@@ -73,11 +75,10 @@ let pageTotal = ref(4);
 // 获取表格数据
 onMounted(async()=>{
    let res = await service.get(`Admin/GetRole?pageIndex=${query.pageIndex}&pageSize=${query.pageSize}`);
-  console.log(res.data.value)
   res.data.value.forEach(role => {
     roleList.push(role.name);
   });
-  pageTotal.value = res.data.message * 1;//更新总页数
+  pageTotal.value = res.data.message * query.pageSize;//更新总页数
   const array = res.data.value
   array.forEach(role => {
     tableData.push({
@@ -90,12 +91,33 @@ onMounted(async()=>{
 const handleSearch = () => {
 	query.pageIndex = 1;
 };
-// 分页导航
-const handlePageChange = (val: number) => {
-	query.pageIndex = val;
-};
 const handleAddRole = () => {
 	editVisible.value = true;
+}
+const prevClick = async ()=>{
+  query.pageIndex - 1; 
+  await changePage();
+}
+const nextClick = async ()=>{
+  query.pageIndex + 1; 
+  await changePage();
+}
+// 分页导航
+const handlePageChange = async (val: number) => {
+	query.pageIndex = val;
+	await changePage();
+};
+const changePage = async ()=>{
+  let res = await service.get(`Admin/GetRole?pageIndex=${query.pageIndex}&pageSize=${query.pageSize}`);
+  console.log(res.data.value)
+  const array = res.data.value;
+  tableData.splice(0, query.pageSize);
+  array.forEach(role => {
+    tableData.push({
+      "id": role.id,
+     "name": role.name,
+    })
+  });
 }
 // 删除操作
 const handleDelete = (index: number,row: any) => {
@@ -105,7 +127,6 @@ const handleDelete = (index: number,row: any) => {
 	})
 		.then( async () => {
       let result = await service.post(`/Admin/DeleteRole?roleName=${row.name}`);
-      router.go(0);
       ElMessage.success('删除成功');
 			tableData.splice(index, 1);
 		})
@@ -133,6 +154,7 @@ const saveEdit = async() => {
     ElMessage.error(error.data);
   }
 };
+
 </script>
 
 <style scoped>
